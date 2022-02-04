@@ -7,7 +7,11 @@
 
 @layer base {
   body {
-    @apply text-white font-body bg-slate-900;
+    @apply text-white font-body min-h-screen ;
+    background : url("/image.png") ;
+    background-position: top;
+    background-repeat: no-repeat;
+    background-size: cover;
   }
   h1,h2,h3,h4,h5,h6{
     @apply font-display;
@@ -18,4 +22,11 @@
     @apply active:ring-2;
     @apply focus-within:outline-none focus-within:ring-1 ring-white  ;  
  }
+ input{
+  @apply focus-within:outline-none;
+  @apply py-2 px-4 rounded-xl font-body text-slate-100;
+  @apply hover:border-cyan-200 hover:scale-105;
+  @apply bg-slate-800 bg-opacity-50 backdrop-blur-lg  border-2 focus-within:scale-95 border-slate-500 focus-within:border-cyan-400 transition-all duration-300 ease-out;
+  @apply placeholder-slate-500
+}
 }

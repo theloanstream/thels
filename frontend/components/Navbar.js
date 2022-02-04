@@ -7,15 +7,16 @@ const NAV_LINKS = [
   { name: "Dashboard", href: '/dashboard' },
   { name: "Lend", href: '/lend' },
   { name: "Borrow", href: '/borrow' },
+  { name: "Wrap", href: '/wrap' },
 ]
 
 const styles = {
-  header: 'border-b py-4 border-slate-600 ',
+  header: ' py-4  ',
   navbar: 'container mx-auto px-4 lg:px-0 flex items-center max-w-screen-lg  justify-between',
-  brand: 'text-3xl font-bold',
-  navlink: 'text-gray-600 font-medium  hover:text-slate-200 hover:bg-slate-800  px-3 py-1 rounded-xl transition duration-300 ease-out',
-  navlinkContainer: 'flex gap-6',
-  active: 'text-cyan-400'
+  brand: 'text-3xl font-bold cursor-pointer',
+  navlink: 'text-slate-300 font-medium hover:text-slate-50 hover:bg-slate-800  px-3 py-1 rounded-xl transition duration-300 ease-out',
+  navlinkContainer: 'hidden md:flex gap-6',
+  active: 'text-cyan-400  border-cyan-100'
 }
 
 export const Navbar = () => {
@@ -23,7 +24,7 @@ export const Navbar = () => {
   return (
     <header className={styles.header}>
       <nav className={styles.navbar} >
-        <h1 className={styles.brand}>Thels</h1>
+        <Link href='/'><h1 className={styles.brand}>Thels</h1></Link>
         <ul className={styles.navlinkContainer}>
           {NAV_LINKS.map((link) => (
             <Link key={link.name} href={link.href}>
