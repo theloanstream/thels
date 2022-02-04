@@ -31,7 +31,7 @@ const ConnectWallet = () => {
   if (!isAuthenticated) {
     return (
       <button onClick={() => authenticate()} className={btnStyle}>
-        "Connect Wallet"
+        Connect Wallet
       </button>
     );
   }
