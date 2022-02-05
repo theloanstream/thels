@@ -14,7 +14,7 @@ def deploy(account: Account = get_account()):
     )
 
 
-def add_uni(thels: Contract, account: Account = get_account()):
+def allow_uni(thels: Contract, account: Account = get_account()):
     thels.allowToken(
         get_contract("uni_token").address,
         get_contract("uni_usd_price_feed").address,
@@ -33,5 +33,5 @@ def main():
 
     # Add UNI to allowed tokens
     print("Adding UNI as an allowed token...")
-    add_uni(thels, account)
+    allow_uni(thels, account)
     print("Added.")
