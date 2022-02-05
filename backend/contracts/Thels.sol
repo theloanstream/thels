@@ -112,8 +112,9 @@ contract Thels is Ownable {
         );
         require(
             getBorrowableAmount(msg.sender) >=
-                ((getTokenPrice(allowedTokens[token]) * amount) / (10**18)) +
-                    debtAmounts[msg.sender],
+                (((getTokenPrice(allowedTokens[token]) * amount) / (10**21)) *
+                    allowedTokens[token].borrowPercent +
+                    debtAmounts[msg.sender]),
             "Cannot withdraw without paying debt."
         );
         IERC20 _token = IERC20(token);
@@ -125,10 +126,10 @@ contract Thels is Ownable {
     // repay debt
     function repay(uint256 amount) public {
         require(
-            debtAmounts[msg.sender] <= amount,
+            amount <= debtAmounts[msg.sender],
             "Cannot repay more than owed."
         );
-        USDCToken.transferFrom(msg.sender, address(this), amount);
+        convertToUSDCx(amount);
         debtAmounts[msg.sender] -= amount;
         emit RepaidDebt(msg.sender, amount);
     }
@@ -175,6 +176,8 @@ contract Thels is Ownable {
             // overflow check
             if (debtAmounts[msg.sender] > 0) {
                 debtAmounts[msg.sender] -= addFee(extraDebt);
+            } else {
+                depositAmounts[msg.sender] += addFee(extraDebt);
             }
         }
         distributeRewards((extraDebt * FEE) / 1000);
