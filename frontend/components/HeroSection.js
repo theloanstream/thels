@@ -4,7 +4,7 @@ import React from 'react';
 function HeroSection() {
   return (
     <div className='grid lg:grid-cols-2 mt-12 gap-8 px-4 lg:px-0 items-center justify-center'>
-      <div className='flex  flex-col justify-center'>
+      <div className='flex mb-12  flex-col justify-center'>
         <h1 className='text-4xl lg:text-6xl font-bold mb-6' >
           The Loan Stream
         </h1>

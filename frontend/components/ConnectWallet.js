@@ -1,19 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useMoralis } from 'react-moralis';
 import { DuplicateIcon } from '@heroicons/react/outline'
-import toast from 'react-hot-toast';
+import { shortenAddress ,copyToClipboard } from '../utils/utils';
 
-
-const shortenAddress = (address) => {
-  return address.slice(0, 4) + " . . . " + address.slice(-5, -1);
-}
 
 const btnStyle = "bg-cyan-500 hover:shadow-2xl hover:bg-cyan-400 active:bg-cyan-600 text-white flex gap-2 items-center"
-
-const copyToClipboard = (str) => {
-  navigator.clipboard.writeText(str);
-  toast.success("Copied to Clipboard!")
-}
 
 const ConnectWallet = () => {
   const [walletAddress, setWalletAddress] = useState('');
