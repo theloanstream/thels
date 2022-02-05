@@ -94,6 +94,11 @@ contract Thels is Ownable {
             allowedTokens[token].tokenAddress != address(0),
             "Token is not allowed as collateral."
         );
+        require(
+            //check if collateral is worth of deptAmounts
+            getCollateralValue() < debtAmounts[token], //not sure if contract sets any value to debtAmount before 
+            "Token is not worth of the debt"
+        );
         IERC20 _token = IERC20(token);
         _token.transferFrom(msg.sender, address(this), amount);
         collateralAmounts[msg.sender][token] += amount;
