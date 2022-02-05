@@ -50,13 +50,13 @@ contract Thels is Ownable {
 
     uint256 public constant FEE = 50; // 50 => 5.0%
 
-    mapping(address => mapping(address => uint256)) public collateralAmounts;
-    mapping(address => mapping(address => Stream)) public streams;
-    mapping(address => uint256) public depositAmounts;
-    mapping(address => uint256) public debtAmounts;
-    mapping(address => Token) public allowedTokens;
-    address[] public deposited;
-    address[] public allowedTokenList;
+    mapping(address => mapping(address => uint256)) public depositAmounts; // tokens and deposit amounts of each user
+    mapping(address => mapping(address => Stream)) public streams; // opened streams of each user
+    mapping(address => uint256) public lendAmounts; // USDC lend amount of each user
+    mapping(address => uint256) public borrowAmounts; // USDC borrow amount of each user
+    mapping(address => Token) public allowedTokens; // mapping that shows if a token can be used as collateral
+    address[] public deposited; // users who have made a deposit
+    address[] public allowedTokenList; // list of tokens that can be used as collateral
     IERC20 public USDCToken;
     ISuperToken public USDCxToken;
     CFAv1Library.InitData public cfaV1;
@@ -94,14 +94,9 @@ contract Thels is Ownable {
             allowedTokens[token].tokenAddress != address(0),
             "Token is not allowed as collateral."
         );
-        require(
-            //check if collateral is worth of deptAmounts
-            getCollateralValue() < debtAmounts[token], //not sure if contract sets any value to debtAmount before 
-            "Token is not worth of the debt"
-        );
         IERC20 _token = IERC20(token);
         _token.transferFrom(msg.sender, address(this), amount);
-        collateralAmounts[msg.sender][token] += amount;
+        depositAmounts[msg.sender][token] += amount;
         emit AddedCollateral(msg.sender, token, amount);
     }
 
@@ -112,18 +107,18 @@ contract Thels is Ownable {
             "Token is not allowed as collateral."
         );
         require(
-            collateralAmounts[msg.sender][token] >= amount,
+            depositAmounts[msg.sender][token] >= amount,
             "Not enough balance."
         );
         require(
             getBorrowableAmount(msg.sender) >=
                 (((getTokenPrice(allowedTokens[token]) * amount) / (10**21)) *
                     allowedTokens[token].borrowPercent +
-                    debtAmounts[msg.sender]),
+                    borrowAmounts[msg.sender]),
             "Cannot withdraw without paying debt."
         );
         IERC20 _token = IERC20(token);
-        collateralAmounts[msg.sender][token] -= amount;
+        depositAmounts[msg.sender][token] -= amount;
         _token.transfer(msg.sender, amount);
         emit RemovedCollateral(msg.sender, token, amount);
     }
@@ -131,11 +126,11 @@ contract Thels is Ownable {
     // repay debt
     function repay(uint256 amount) public {
         require(
-            amount <= debtAmounts[msg.sender],
+            amount <= borrowAmounts[msg.sender],
             "Cannot repay more than owed."
         );
         convertToUSDCx(amount);
-        debtAmounts[msg.sender] -= amount;
+        borrowAmounts[msg.sender] -= amount;
         emit RepaidDebt(msg.sender, amount);
     }
 
@@ -158,7 +153,7 @@ contract Thels is Ownable {
             addFee(totalBorrow) < getBorrowableAmount(msg.sender),
             "Cannot borrow more than allowed."
         );
-        debtAmounts[msg.sender] += addFee(totalBorrow);
+        borrowAmounts[msg.sender] += addFee(totalBorrow);
         streams[msg.sender][receiver] = Stream(
             receiver,
             flowRate,
@@ -179,10 +174,10 @@ contract Thels is Ownable {
         uint256 extraDebt = getRemainingAmount(streams[msg.sender][receiver]);
         if (extraDebt > 0) {
             // overflow check
-            if (debtAmounts[msg.sender] > 0) {
-                debtAmounts[msg.sender] -= addFee(extraDebt);
+            if (borrowAmounts[msg.sender] >= addFee(extraDebt)) {
+                borrowAmounts[msg.sender] -= addFee(extraDebt);
             } else {
-                depositAmounts[msg.sender] += addFee(extraDebt);
+                lendAmounts[msg.sender] += addFee(extraDebt);
             }
         }
         distributeRewards((extraDebt * FEE) / 1000);
@@ -194,20 +189,20 @@ contract Thels is Ownable {
     function convertToUSDCx(uint256 amount) public {
         USDCToken.transferFrom(msg.sender, address(this), amount);
         USDCxToken.upgrade(amount);
-        if (depositAmounts[msg.sender] == 0) {
+        if (lendAmounts[msg.sender] == 0) {
             deposited.push(msg.sender);
         }
-        depositAmounts[msg.sender] += amount;
+        lendAmounts[msg.sender] += amount;
         emit AddedUSDC(msg.sender, amount);
     }
 
     // withdraw USDC
     function convertToUSDC(uint256 amount) public {
         require(
-            amount <= depositAmounts[msg.sender],
+            amount <= lendAmounts[msg.sender],
             "Cannot withdraw more than supplied."
         );
-        depositAmounts[msg.sender] -= amount;
+        lendAmounts[msg.sender] -= amount;
         USDCxToken.downgrade(amount);
         USDCToken.transfer(msg.sender, amount);
         emit RemovedUSDC(msg.sender, amount);
@@ -217,7 +212,7 @@ contract Thels is Ownable {
     function getCollateralValue(address user) public view returns (uint256) {
         uint256 totalValue = 0;
         for (uint256 i = 0; i < allowedTokenList.length; i++) {
-            uint256 currentTokenAmount = collateralAmounts[user][
+            uint256 currentTokenAmount = depositAmounts[user][
                 allowedTokenList[i]
             ];
             if (currentTokenAmount > 0) {
@@ -230,11 +225,12 @@ contract Thels is Ownable {
         return totalValue;
     }
 
-    // get the total borroable amount of a user
+    // get the total borrowable amount of a user
+    // TODO: add liquidation
     function getBorrowableAmount(address user) public view returns (uint256) {
         uint256 totalValue = 0;
         for (uint256 i = 0; i < allowedTokenList.length; i++) {
-            uint256 currentTokenAmount = collateralAmounts[user][
+            uint256 currentTokenAmount = depositAmounts[user][
                 allowedTokenList[i]
             ];
             if (currentTokenAmount > 0) {
@@ -245,7 +241,10 @@ contract Thels is Ownable {
                     10**21;
             }
         }
-        return totalValue - debtAmounts[user];
+        if (totalValue < borrowAmounts[user]) {
+            return 0;
+        }
+        return totalValue - borrowAmounts[user];
     }
 
     function getTotalUSDCx() public view returns (uint256) {
@@ -294,8 +293,8 @@ contract Thels is Ownable {
     // distributes amount of fee to lenders
     function distributeRewards(uint256 amount) private {
         for (uint256 i = 0; i < deposited.length; i++) {
-            depositAmounts[deposited[i]] +=
-                (amount * depositAmounts[deposited[i]]) /
+            lendAmounts[deposited[i]] +=
+                (amount * lendAmounts[deposited[i]]) /
                 getTotalUSDCx();
         }
     }
