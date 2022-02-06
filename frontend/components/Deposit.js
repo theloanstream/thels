@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import Moralis from 'moralis';
-
+import toast from 'react-hot-toast';
 import Card from './Card'
 import Select from './Select';
 import { THELS_CONTRACT_ADDRESS, UNI_CONTRACT_ADDRESS } from '../constants/contractAddress';
 import ABI, { ERC20_ABI } from '../constants/abi';
 
 const TOKEN_LIST = [
-  { name: "UNI", id: 1, value: "UNI", address: UNI_CONTRACT_ADDRESS },
+  { name: "🦄UNI", id: 1, value: "UNI", address: UNI_CONTRACT_ADDRESS },
 ]
 
 function Deposit() {
@@ -27,8 +27,11 @@ function Deposit() {
       const ethers = Moralis.web3Library;
       const thelsContract = new ethers.Contract(THELS_CONTRACT_ADDRESS, ABI, signer);
       const uniContract = new ethers.Contract(UNI_CONTRACT_ADDRESS, ERC20_ABI, signer);
-      let tx = await uniContract.approve(THELS_CONTRACT_ADDRESS, ethers.constants.MaxUint256);
-      await tx.wait();
+      const allowance = await uniContract.allowance(await signer.getAddress(), THELS_CONTRACT_ADDRESS);
+      if (allowance == 0) {
+        let tx = await uniContract.approve(THELS_CONTRACT_ADDRESS, ethers.constants.MaxUint256);
+        await tx.wait();
+      }
       let depositCollateral = await thelsContract.deposit(tokenAddress, ethers.utils.parseEther(amount));
       await depositCollateral.wait();
       toast.success("Transaction Confirmed 🎉🎉")
