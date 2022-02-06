@@ -12,8 +12,8 @@ import ABI, { ERC20_ABI } from '../constants/abi';
 
 
 const TYPES = [
-  { id: 0, name: "USDC to USDCx", value: 'Wrap', from: 'USDC', to: 'USDCx' },
-  { id: 1, name: "USDCx to USDC", value: 'Unwrap', from: 'USDCx', to: 'USDC' },
+  { id: 0, name: "Lend", value: 'lend', from: 'USDC', to: 'USDCx' },
+  { id: 1, name: "Withdraw", value: 'withdraw', from: 'USDCx', to: 'USDC' },
 ]
 
 function Wrap() {
@@ -81,13 +81,13 @@ function Wrap() {
 
   return (
     <Card>
-      <h1 className='text-2xl font-bold mb-4'>Wrap / Unwrap Tokens</h1>
+      <h1 className='text-2xl font-bold mb-4'>Lend / Withdraw Tokens</h1>
       <form onSubmit={handleWrap} className='flex gap-4 flex-col'>
         <Select list={TYPES} value={type} setValue={setType} />
         <input min={0} value={amount} onChange={(e) => setAmount(e.target.value)} type="number" placeholder={`${type.from} amount`} />
-        <p>You will get {amount ? amount : 0} {type.to}</p>
+        <p>You will {type.value} {amount ? amount : 0} {type.to}</p>
         <button disabled={pending} className='bg-violet-500 hover:bg-violet-400  active:bg-violet-600 shadow-xl'>
-          {pending ? "Transaction Pending..." : type.id == 0 ? "Wrap" : "Unwrap"}
+          {pending ? "Transaction Pending..." : type.name }
         </button>
       </form>
     </Card>
