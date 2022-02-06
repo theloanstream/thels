@@ -25,8 +25,14 @@ def withdraw_token(thels: Contract, token: str, amount: int, account=get_account
     return tx
 
 
-def lend_token(thels: Contract, amount: int, account=get_account()):
+def lend_usdc(thels: Contract, amount: int, account=get_account()):
     tx = thels.convertToUSDCx(amount, {"from": account})
+    tx.wait(1)
+    return tx
+
+
+def withdraw_usdc(thels: Contract, amount: int, account=get_account()):
+    tx = thels.convertToUSDC(amount, {"from": account})
     tx.wait(1)
     return tx
 
@@ -51,5 +57,5 @@ def main():
 
     # Lend USDC
     print("Lending USDC...")
-    lend_token(Thels[-1], 100 * 10 ** 18, account)
+    lend_usdc(Thels[-1], 100 * 10 ** 18, account)
     print("Lent.")

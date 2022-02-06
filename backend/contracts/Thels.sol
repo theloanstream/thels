@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/CFAv1Library.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperToken.sol";
 import "@chainlink/contracts/src/v0.7/interfaces/AggregatorV3Interface.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 contract Thels is Ownable {
     using CFAv1Library for CFAv1Library.InitData;
@@ -22,6 +23,8 @@ contract Thels is Ownable {
         int96 flowRate;
         uint256 start;
         uint256 end;
+        uint256 fee;
+        uint256 buffer;
     }
 
     event AddedCollateral(
@@ -47,8 +50,10 @@ contract Thels is Ownable {
     );
     event AddedUSDC(address indexed lender, uint256 amount);
     event RemovedUSDC(address indexed lender, uint256 amount);
+    event Liquidated(address indexed borrower, uint256 amount);
 
     uint256 public constant FEE = 50; // 50 => 5.0%
+    uint256 public constant BUFFER = 20; // 20 => 2.0%
 
     mapping(address => mapping(address => uint256)) public depositAmounts; // tokens and deposit amounts of each user
     mapping(address => mapping(address => Stream)) public streams; // opened streams of each user
@@ -60,15 +65,18 @@ contract Thels is Ownable {
     IERC20 public USDCToken;
     ISuperToken public USDCxToken;
     CFAv1Library.InitData public cfaV1;
+    ISwapRouter public router;
 
     constructor(
         address _USDCToken,
         address _USDCxToken,
-        address _SuperfluidHost
+        address _SuperfluidHost,
+        address _UniswapRouter
     ) {
         USDCToken = IERC20(_USDCToken);
         USDCxToken = ISuperToken(_USDCxToken);
         ISuperfluid _host = ISuperfluid(_SuperfluidHost);
+        router = ISwapRouter(_UniswapRouter);
         // initialize InitData struct, and set equal to cfaV1
         cfaV1 = CFAv1Library.InitData(
             _host,
@@ -129,7 +137,8 @@ contract Thels is Ownable {
             amount <= borrowAmounts[msg.sender],
             "Cannot repay more than owed."
         );
-        convertToUSDCx(amount);
+        USDCToken.transferFrom(msg.sender, address(this), amount);
+        USDCxToken.upgrade(amount);
         borrowAmounts[msg.sender] -= amount;
         emit RepaidDebt(msg.sender, amount);
     }
@@ -144,48 +153,57 @@ contract Thels is Ownable {
         uint256 endTime
     ) public {
         require(endTime > block.timestamp, "Cannot set end time to past.");
-        require(
-            streams[msg.sender][receiver].start == 0,
-            "Stream already exists."
-        );
+        Stream storage stream = streams[msg.sender][receiver];
+        require(stream.start == 0, "Stream already exists.");
         uint256 totalBorrow = uint256(flowRate) * (endTime - block.timestamp);
+        uint256 fee = (totalBorrow * FEE) / 1000;
+        uint256 buffer = (totalBorrow * BUFFER) / 1000;
         require(
-            addFee(totalBorrow) < getBorrowableAmount(msg.sender),
+            totalBorrow + fee + buffer < getBorrowableAmount(msg.sender),
             "Cannot borrow more than allowed."
         );
-        borrowAmounts[msg.sender] += addFee(totalBorrow);
-        streams[msg.sender][receiver] = Stream(
+        borrowAmounts[msg.sender] += totalBorrow + fee + buffer;
+        addStream(
+            stream,
             receiver,
             flowRate,
             block.timestamp,
-            endTime
+            endTime,
+            fee,
+            buffer
         );
         cfaV1.createFlow(receiver, USDCxToken, flowRate);
-        emit StartedStream(msg.sender, receiver, streams[msg.sender][receiver]);
+        emit StartedStream(msg.sender, receiver, stream);
     }
 
-    // stop a previously opened stream and distribute fee rewards
+    // stop a previously opened stream and distribute fee rewards,
+    // also refund buffer if closed before expiring.
     function stopStream(address receiver) public {
-        require(
-            streams[msg.sender][receiver].start != 0,
-            "Stream does not exist."
-        );
+        Stream storage stream = streams[msg.sender][receiver];
+        require(stream.start != 0, "Stream does not exist.");
         cfaV1.deleteFlow(address(this), receiver, USDCxToken);
-        uint256 extraDebt = getRemainingAmount(streams[msg.sender][receiver]);
+        uint256 extraDebt = getRemainingAmount(stream);
+        if (!hasElapsed(stream)) {
+            extraDebt += stream.buffer;
+        }
         if (extraDebt > 0) {
-            // overflow check
-            if (borrowAmounts[msg.sender] >= addFee(extraDebt)) {
-                borrowAmounts[msg.sender] -= addFee(extraDebt);
+            // will be reduced from debt, if debt is paid,
+            // it is added to lent amount instead
+            if (borrowAmounts[msg.sender] < extraDebt) {
+                lendAmounts[msg.sender] +=
+                    extraDebt -
+                    borrowAmounts[msg.sender];
+                borrowAmounts[msg.sender] = 0;
             } else {
-                lendAmounts[msg.sender] += addFee(extraDebt);
+                borrowAmounts[msg.sender] -= extraDebt;
             }
         }
-        distributeRewards((extraDebt * FEE) / 1000);
-        emit StoppedStream(msg.sender, receiver, streams[msg.sender][receiver]);
+        distributeRewards(stream.fee);
+        emit StoppedStream(msg.sender, receiver, stream);
         delete streams[msg.sender][receiver];
     }
 
-    // deposit USDC
+    // lend USDC
     function convertToUSDCx(uint256 amount) public {
         USDCToken.transferFrom(msg.sender, address(this), amount);
         USDCxToken.upgrade(amount);
@@ -208,6 +226,50 @@ contract Thels is Ownable {
         emit RemovedUSDC(msg.sender, amount);
     }
 
+    // liquidate borrower's token if the price of it drops below the borrowing amount
+    function liquidate(address user) public {
+        require(
+            getBorrowableAmount(user) < borrowAmounts[user],
+            "Colatteral is larger than debt."
+        );
+
+        uint256 amount = 0;
+        for (uint256 i = 0; i < allowedTokenList.length; i++) {
+            ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
+                .ExactInputSingleParams(
+                    allowedTokenList[i],
+                    address(USDCToken),
+                    3000,
+                    address(this),
+                    block.timestamp + 600,
+                    depositAmounts[user][allowedTokenList[i]],
+                    0,
+                    0
+                );
+            depositAmounts[user][allowedTokenList[i]] = 0;
+            amount += router.exactInputSingle(params);
+        }
+        uint256 rewardAmount = (amount * FEE) / 1000;
+        USDCToken.transfer(msg.sender, rewardAmount);
+        USDCxToken.upgrade(amount - rewardAmount);
+        lendAmounts[address(this)] += amount - rewardAmount;
+        emit Liquidated(user, amount);
+    }
+
+    // stop stream if the stream has past the end time
+    function stopFinishedStream(address sender, address receiver) public {
+        Stream storage stream = streams[sender][receiver];
+        require(stream.end < block.timestamp, "Stream has not finished.");
+        cfaV1.deleteFlow(address(this), receiver, USDCxToken);
+        uint256 rewardAmount = (stream.buffer * FEE) / 1000;
+        USDCxToken.downgrade(rewardAmount);
+        USDCToken.transfer(msg.sender, rewardAmount);
+        lendAmounts[address(this)] += stream.buffer - rewardAmount;
+        distributeRewards(stream.fee);
+        emit StoppedStream(sender, receiver, stream);
+        delete streams[sender][receiver];
+    }
+
     // gets the total collateral value of a user
     function getCollateralValue(address user) public view returns (uint256) {
         uint256 totalValue = 0;
@@ -226,7 +288,6 @@ contract Thels is Ownable {
     }
 
     // get the total borrowable amount of a user
-    // TODO: add liquidation
     function getBorrowableAmount(address user) public view returns (uint256) {
         uint256 totalValue = 0;
         for (uint256 i = 0; i < allowedTokenList.length; i++) {
@@ -290,13 +351,47 @@ contract Thels is Ownable {
         }
     }
 
+    // withdraw protocol fees: admin function
+    function withdrawFees(uint256 amount) public onlyOwner {
+        require(
+            amount <= lendAmounts[address(this)],
+            "Cannot withdraw more than earned."
+        );
+        USDCxToken.downgrade(amount);
+        USDCToken.transfer(msg.sender, amount);
+        lendAmounts[address(this)] -= amount;
+    }
+
     // distributes amount of fee to lenders
     function distributeRewards(uint256 amount) private {
+        uint256 totalLendAmount = 0;
+        for (uint256 i = 0; i < deposited.length; i++) {
+            totalLendAmount += lendAmounts[deposited[i]];
+        }
+
         for (uint256 i = 0; i < deposited.length; i++) {
             lendAmounts[deposited[i]] +=
                 (amount * lendAmounts[deposited[i]]) /
-                getTotalUSDCx();
+                totalLendAmount;
         }
+    }
+
+    // add stream info to streams struct
+    function addStream(
+        Stream storage stream,
+        address receiver,
+        int96 flowRate,
+        uint256 start,
+        uint256 end,
+        uint256 fee,
+        uint256 buffer
+    ) private {
+        stream.receiver = receiver;
+        stream.flowRate = flowRate;
+        stream.start = start;
+        stream.end = end;
+        stream.fee = fee;
+        stream.buffer = buffer;
     }
 
     // returns the price in wei (10^18)
@@ -317,6 +412,11 @@ contract Thels is Ownable {
         return (stream.end - block.timestamp) * uint256(stream.flowRate);
     }
 
+    // returns true if stream has elapsed
+    function hasElapsed(Stream memory stream) private view returns (bool) {
+        return (block.timestamp < stream.end);
+    }
+
     // gets the total amount of stream in seconds
     function getTotalAmount(Stream memory stream)
         private
@@ -327,7 +427,11 @@ contract Thels is Ownable {
     }
 
     // adds fee to an amount
-    function addFee(uint256 amount) private pure returns (uint256) {
-        return (amount * ((1000 + FEE) / 1000));
+    function addFee(uint256 amount, uint256 fee)
+        private
+        pure
+        returns (uint256)
+    {
+        return (amount * ((1000 + fee) / 1000));
     }
 }

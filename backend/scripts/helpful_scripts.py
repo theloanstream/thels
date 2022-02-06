@@ -17,6 +17,7 @@ CONTRACT_TO_MOCK = {
     "usdcx_token": [MockSuperToken, 0],
     "uni_usd_price_feed": [MockV3Aggregator, 0],
     "superfluid_host": [MockSuperfluid, 0],
+    "uniswap_router": [None, 0],
 }
 
 
@@ -37,6 +38,10 @@ def get_contract(contract_name: str) -> Contract:
             deploy_mocks()
         contract = contract_type[CONTRACT_TO_MOCK[contract_name][1]]
     else:
+        if contract_type is None:
+            return Contract.from_explorer(
+                config["networks"][network.show_active()][contract_name]
+            )
         contract_address = config["networks"][network.show_active()][contract_name]
         contract = Contract.from_abi(
             contract_type._name, contract_address, contract_type.abi
