@@ -9,6 +9,7 @@ def deploy(account: Account = get_account()):
         get_contract("usdc_token"),
         get_contract("usdcx_token"),
         get_contract("superfluid_host"),
+        get_contract("uniswap_router"),
         {"from": account},
         publish_source=config["networks"][network.show_active()].get("verify", False),
     )
