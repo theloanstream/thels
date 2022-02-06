@@ -17,6 +17,7 @@ cd backend
 brownie run scripts/deploy.py
 ```
 
+You can run the frontend on your local environment using the following commands
 ```cmd
 cd frontend
 npm install
