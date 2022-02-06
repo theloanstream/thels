@@ -28,3 +28,8 @@ networks:
     superfluid_host: '0x3E14dC1b13c488a8d5D310918780c983bD5982E7'
     uni_usd_price_feed: '0xdf0Fb4e4F928d2dCB76f438575fDD8682386e13C'
     verify: True
+  rinkeby:
+    daix: "0x745861AeD1EEe363b4AaA5F1994Be40b1e05Ff90"
+    superfluid_host: "0xeD5B5b32110c3Ded02a07c8b8e97513FAfb883B6"
+    thels_contract : "0x366E132aC4e5963c3470e48013A8f254752889f4"
+    verify: true 
