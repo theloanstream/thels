@@ -16,3 +16,9 @@ You can deploy the contract to any network with:
 cd backend
 brownie run scripts/deploy.py
 ```
+
+```cmd
+cd frontend
+npm install
+npm run dev
+```
