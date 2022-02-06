@@ -26,6 +26,7 @@
     @apply active:scale-95 transition-all duration-300  ease-out;
     @apply active:ring-2;
     @apply focus-within:outline-none focus-within:ring-1 ring-white;
+    @apply disabled:bg-slate-400 disabled:text-slate-800;
   }
   input {
     @apply focus-within:outline-none;
@@ -37,4 +38,5 @@
   input[type=number]{
     @apply appearance-none;
   }
+  
 }

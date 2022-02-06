@@ -1,6 +1,7 @@
 import { ArrowRightIcon } from '@heroicons/react/outline';
 import Link from 'next/link';
 import React from 'react';
+
 function HeroSection() {
   return (
     <div className='grid lg:grid-cols-2 mt-12 gap-8 px-4 lg:px-0 items-center justify-center'>

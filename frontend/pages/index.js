@@ -2,10 +2,13 @@ import Head from 'next/head'
 import HeroSection from '../components/HeroSection'
 import Container from '../components/Container'
 import Navbar from '../components/Navbar'
+import { useMoralis } from 'react-moralis';
 export default function Home() {
+
+
   return (
     <div className='min-h-screen flex flex-col'>
-       <Head>
+      <Head>
         <title>Thels</title>
         <meta name="description" content="Thels - the loan stream" />
         <link rel="icon" href="/favicon.ico" />
@@ -14,7 +17,7 @@ export default function Home() {
       <main >
         <Container>
 
-            <HeroSection />
+          <HeroSection />
 
         </Container>
       </main>
