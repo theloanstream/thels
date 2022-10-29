@@ -5,7 +5,7 @@ import ConnectWallet from './ConnectWallet';
 import { useAccount, Web3Button } from '@web3modal/react'
 
 const NAV_LINKS = [
-  { name: "Dashboard", href: '/dashboard' },
+  { name: "Trade", href: '/trade' },
 ]
 
 const styles = {

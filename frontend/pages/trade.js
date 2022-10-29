@@ -11,7 +11,7 @@ import StartStream from '../components/StartStream';
 import StopStream from '../components/StopStream';
 
 
-function dashboard() {
+function trade() {
   const [pending, setPending] = useState(false);
   const [borrowoableAmount, setBorrowableAmount] = useState(0);
   const [collateralAmount, setCollateralAmount] = useState(0);
@@ -109,4 +109,4 @@ function dashboard() {
   </>;
 }
 
-export default dashboard;
+export default trade;
