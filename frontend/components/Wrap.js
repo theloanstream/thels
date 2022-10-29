@@ -1,95 +1,86 @@
 import React, { useState } from 'react';
-import Moralis from 'moralis';
 import Card from './Card';
 import Select from './Select';
-import toast from 'react-hot-toast';
-import {
-  THELS_CONTRACT_ADDRESS
-  , USDCX_CONTRACT_ADDRESS
-  , USDC_CONTRACT_ADDRESS
-} from '../constants/contractAddress';
-import ABI, { ERC20_ABI } from '../constants/abi';
 
 
-const TYPES = [
-  { id: 0, name: "Lend", value: 'lend', from: 'USDC', to: 'USDC' },
-  { id: 1, name: "Withdraw", value: 'withdraw', from: 'USDCx', to: 'USDC' },
+const data = [
+  { id: 0, action: "Long", coin: "ETH", leverage: "2x", networth: 20 },
+  { id: 1, action: "Short", coin: "BTC", leverage: "1.5x", networth: 5 },
+  { id: 2, action: "Long", coin: "SHIBA", leverage: "2.5x", networth: 3 },
+  { id: 3, action: "Short", coin: "DOGE", leverage: "3x", networth: 100 },
 ]
 
 function Wrap() {
-  const [type, setType] = useState(TYPES[0]);
-  const [amount, setAmount] = useState(0);
-  const [pending, setPending] = useState(false);
+  const [amount, setAmount] = useState(0); // Amount
+  const [showForm, setShowForm] = useState(false);
+  const [key, setKey] = useState(-1);
 
-
-  const convertToUSDCx = async (amt) => {
-    try {
-      setPending(true)
-      const web3Provider = await Moralis.enableWeb3();
-      const ethers = Moralis.web3Library;
-      const signer = web3Provider.getSigner();
-      const max_amt = ethers.constants.MaxUint256;
-      //Call thels contract
-      const thelsContract = new ethers.Contract(THELS_CONTRACT_ADDRESS, ABI, signer);
-
-      const usdcContract = new ethers.Contract(USDC_CONTRACT_ADDRESS, ERC20_ABI, signer);
-      const allowance = await usdcContract.allowance(await signer.getAddress(), THELS_CONTRACT_ADDRESS);
-      if (allowance == 0) {
-        let tx = await usdcContract.approve(THELS_CONTRACT_ADDRESS, max_amt)
-        await tx.wait();
-      }
-      let convert = await thelsContract.convertToUSDCx(ethers.utils.parseEther(amt));
-      await convert.wait();
-      console.log(convert);
-      toast.success("Transaction Confirmed 🎉🎉")
-      setPending(false);
-    } catch (err) {
-      toast.error(err?.data?.message);
-      setPending(false);
-      console.log(err);
-    }
-
-  }
-
-  const convertToUSDC = async (amt) => {
-    try {
-      setPending(true)
-      const web3Provider = await Moralis.enableWeb3();
-      const ethers = Moralis.web3Library;
-      const signer = web3Provider.getSigner();
-      //Call thels contract
-      const thelsContract = new ethers.Contract(THELS_CONTRACT_ADDRESS, ABI, signer);
-      let convert = await thelsContract.convertToUSDC(ethers.utils.parseEther(amt));
-      await convert.wait();
-      toast.success("Transaction Confirmed 🎉🎉")
-      setPending(false);
-    } catch (err) {
-      toast.error(err.message);
-      setPending(false);
-    }
-  }
+  const Form = () => (
+    <Card>
+      <h1 className='text-2xl font-bold mb-4'>{data[key].action} {data[key].coin}</h1>
+      <form onSubmit={handleWrap} className='flex gap-4 flex-col'>
+        {(data[key].action == "Long") ? <p>Enter amount of coins you want to long</p> : <p>Enter amount in USDC to be used as collateral for short</p>}
+        {/* Enter amount */}
+        <input min={0} value={amount} onChange={(e) => setAmount(e.target.value)} type="number" placeholder="Amount" />
+        {/* Open position */} 
+        <button className='bg-violet-500 hover:bg-violet-400  active:bg-violet-600 shadow-xl'>
+          {/* Here check if the values are entered */}
+          Open position
+        </button> 
+      </form> 
+    </Card>
+  )
 
   const handleWrap = (e) => {
-    e.preventDefault();
-    if (type.id == 0) {
-      convertToUSDCx(amount);
-    } else {
-      convertToUSDC(amount);
-    }
+    var pos = data[key] // Get to data through index using key
+    alert(`Form submitted! ${pos.id}`) // Failed: Display the data using key
   }
 
+  const handleTableEnter = (key, e) => {
+    setShowForm(true);
+    setKey(key);
+  }
+
+  // var descElement = this.getElementsByClassName("description");
+  // descElement.innerHTML="Enter amount of coins you want to long";
+  // if(data[key].action == "Long"){  // <= you can put your condition here
+  //   descElement.innerHTML="Enter amount of coins you want to long";
+  // }else if (data[key].action == "Short"){
+  //   descElement.innerHTML="Enter amount in USDC to be used as collateral for short"; 
+  // }
+  // else {
+  //   descElement.innerHTML="Error";
+  // }
+
   return (
-    <Card>
-      <h1 className='text-2xl font-bold mb-4'>Lend / Withdraw Tokens</h1>
-      <form onSubmit={handleWrap} className='flex gap-4 flex-col'>
-        <Select list={TYPES} value={type} setValue={setType} />
-        <input min={0} value={amount} onChange={(e) => setAmount(e.target.value)} type="number" placeholder={`${type.from} amount`} />
-        <p>You will {type.value} {amount ? amount : 0} {type.to}</p>
-        <button disabled={pending} className='bg-violet-500 hover:bg-violet-400  active:bg-violet-600 shadow-xl'>
-          {pending ? "Transaction Pending..." : type.name}
-        </button>
-      </form>
-    </Card>
+    <div>
+      {/* A table with all available positions */}
+      <div className="App">
+      <table>
+        <tr>
+          <th>Action</th>
+          <th>Coin</th>
+          <th>Leverage</th>
+          <th>Networth</th>
+        </tr>
+        {data.map((val, key) => {
+          return (
+            <tr key={key}>
+              {/* handleTableEnter is triggered all the time */}
+              <td><button onClick={() => handleTableEnter(key)}>Enter</button></td> 
+              <td>{val.action}</td>
+              <td>{val.coin}</td>
+              <td>{val.leverage}</td>
+              <td>{val.networth}</td>
+            </tr>
+          )
+        })}
+      </table>
+    </div>
+
+    {/* Show this form when the user has chosen a position from the table above */}
+    { showForm ? <Form /> : null }
+    </div>
   )
 }
 

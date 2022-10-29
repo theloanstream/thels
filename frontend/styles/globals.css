@@ -8,7 +8,7 @@
 @layer base {
   body {
     @apply text-white font-body min-h-screen;
-    background: url("/image.png");
+    background: #4c4c4c;
     background-position: top;
     background-repeat: no-repeat;
     background-size: cover;

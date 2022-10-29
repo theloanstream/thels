@@ -2,7 +2,11 @@ import Head from 'next/head'
 import HeroSection from '../components/HeroSection'
 import Container from '../components/Container'
 import Navbar from '../components/Navbar'
-import { useMoralis } from 'react-moralis';
+
+
+
+
+
 export default function Home() {
 
 
@@ -20,6 +24,7 @@ export default function Home() {
           <HeroSection />
 
         </Container>
+      
       </main>
     </div>
   )

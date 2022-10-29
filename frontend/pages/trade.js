@@ -11,7 +11,7 @@ import StartStream from '../components/StartStream';
 import StopStream from '../components/StopStream';
 
 
-function dashboard() {
+function trade() {
   const [pending, setPending] = useState(false);
   const [borrowoableAmount, setBorrowableAmount] = useState(0);
   const [collateralAmount, setCollateralAmount] = useState(0);
@@ -69,38 +69,15 @@ function dashboard() {
     getDatafromContract();
   }, [])
 
-
   return <>
     <Navbar />
     <Container>
       <div className='grid gap-4 md:grid-cols-4 mt-16'>
         <div className='col-span-2 grid gap-4'>
           <Wrap />
-          <StopStream />
         </div>
 
         <div className="col-span-2 grid gap-4">
-          <Card>
-            <div className='flex gap-4 justify-around flex-wrap mb-4'>
-              <div>
-                <p className='text-sm text-slate-400 font-medium mb-1'>Borrowable Amount </p>
-                <h1 className='text-2xl font-bold'> $ {borrowoableAmount} </h1>
-              </div>
-              <div>
-                <p className='text-sm text-slate-400 font-medium mb-1'>Collateral Deposited </p>
-                <h1 className='text-2xl font-bold'> $ {collateralAmount} </h1>
-              </div>
-              <div>
-                <p className='text-sm text-slate-400 font-medium mb-1'>Borrowed Amount </p>
-                <h1 className='text-2xl font-bold'> $ {borrowedAmount} </h1>
-              </div>
-            </div>
-            {borrowedAmount == 0 ? '' :
-              <div className='flex flex-col gap-4'>
-                <button onClick={_repayDebt} className='text-center bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600'>Repay Debt </button>
-              </div>}
-          </Card>
-          <StartStream />
         </div>
         <div className='col-span-2'>
         </div>
@@ -109,4 +86,4 @@ function dashboard() {
   </>;
 }
 
-export default dashboard;
+export default trade;

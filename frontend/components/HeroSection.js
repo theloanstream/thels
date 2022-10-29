@@ -11,16 +11,13 @@ function HeroSection() {
         </h1>
         <p className='mb-6 text-slate-400 max-w-lg lg:text-lg'> Allows DAOs with large treasuries & DeFi users to collateralize their treasuries , and take out loans in the form of streams - without having to sell assets to do so.</p>
         <div>
-        <Link href='/dashboard'>
-          <button className='flex gap-2 hover:gap-4 items-center bg-cyan-500 hover:bg-cyan-400 active:bg-cyan-600'>Go to Dashboard
+        <Link href='/trade'>
+          <button className='flex gap-2 hover:gap-4 items-center bg-cyan-500 hover:bg-cyan-400 active:bg-cyan-600'>Go to trade
             <ArrowRightIcon className='h-4 w-4' />
           </button>
         </Link>
         </div>
 
-      </div>
-      <div>
-        <img className='p-4' src='/hero-image-2.png' layout='fill' alt='hero-image' />
       </div>
 
     </div>
