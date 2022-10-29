@@ -80,14 +80,15 @@ function Wrap() {
 
   return (
     <Card>
-      <h1 className='text-2xl font-bold mb-4'>Lend / Withdraw Tokens</h1>
+      <h1 className='text-2xl font-bold mb-4'>Trade</h1>
       <form onSubmit={handleWrap} className='flex gap-4 flex-col'>
         <Select list={TYPES} value={type} setValue={setType} />
+        {/* Enter amount  */}
         <input min={0} value={amount} onChange={(e) => setAmount(e.target.value)} type="number" placeholder={`${type.from} amount`} />
-        <p>You will {type.value} {amount ? amount : 0} {type.to}</p>
+        {/* Open position */}
         <button disabled={pending} className='bg-violet-500 hover:bg-violet-400  active:bg-violet-600 shadow-xl'>
           {pending ? "Transaction Pending..." : type.name}
-        </button>
+        </button> 
       </form>
     </Card>
   )
