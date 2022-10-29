@@ -3,6 +3,7 @@ import { useMoralis } from 'react-moralis';
 import { DuplicateIcon } from '@heroicons/react/outline'
 import { shortenAddress ,copyToClipboard } from '../utils/utils';
 import toast from 'react-hot-toast';
+import { Web3Button, useConnectModal } from '@web3modal/react'
 
 
 const btnStyle = "bg-cyan-500 hover:shadow-2xl cursor-pointer font-display transition ease-out duration-300 py-2 px-4  rounded-xl  hover:bg-cyan-400 active:bg-cyan-600 text-white flex gap-2 items-center"
@@ -10,6 +11,7 @@ const btnStyle = "bg-cyan-500 hover:shadow-2xl cursor-pointer font-display trans
 const ConnectWallet = () => {
   const [walletAddress, setWalletAddress] = useState('');
   const { authenticate, isAuthenticated, user } = useMoralis();
+  const { isOpen, open, close } = useConnectModal()
 
   useEffect(() => {
     if(isAuthenticated){

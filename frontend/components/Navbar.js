@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import ConnectWallet from './ConnectWallet';
+import { useAccount, Web3Button } from '@web3modal/react'
 
 const NAV_LINKS = [
   { name: "Dashboard", href: '/dashboard' },
@@ -33,7 +34,7 @@ export const Navbar = () => {
           ))}
 
         </ul>
-        <ConnectWallet />
+        <Web3Button />
       </nav>
     </header>
   );
