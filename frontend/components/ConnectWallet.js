@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useMoralis } from 'react-moralis';
 import { DuplicateIcon } from '@heroicons/react/outline'
 import { shortenAddress ,copyToClipboard } from '../utils/utils';
 import toast from 'react-hot-toast';
@@ -10,22 +9,21 @@ const btnStyle = "bg-cyan-500 hover:shadow-2xl cursor-pointer font-display trans
 
 const ConnectWallet = () => {
   const [walletAddress, setWalletAddress] = useState('');
-  const { authenticate, isAuthenticated, user } = useMoralis();
   const { isOpen, open, close } = useConnectModal()
 
-  useEffect(() => {
-    if(isAuthenticated){
-      setWalletAddress(user.get('ethAddress'));
-    }
-  }, [user]);
+  // useEffect(() => {
+  //   if(isAuthenticated){
+  //     setWalletAddress(user.get('ethAddress'));
+  //   }
+  // }, [user]);
 
-  if (!isAuthenticated) {
-    return (
-      <button onClick={() => authenticate({onSuccess:()=>toast.success("Wallet Connected Successfully"),onError:()=>toast.error("Error connecting to wallet")})} className={btnStyle}>
-        Connect Wallet
-      </button>
-    );
-  }
+  // if (!isAuthenticated) {
+  //   return (
+  //     <button onClick={() => authenticate({onSuccess:()=>toast.success("Wallet Connected Successfully"),onError:()=>toast.error("Error connecting to wallet")})} className={btnStyle}>
+  //       Connect Wallet
+  //     </button>
+  //   );
+  // }
   return (
     <div as="div"  className={btnStyle}>
       {shortenAddress(walletAddress)}

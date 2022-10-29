@@ -2,7 +2,6 @@ import Head from 'next/head'
 import HeroSection from '../components/HeroSection'
 import Container from '../components/Container'
 import Navbar from '../components/Navbar'
-import { useMoralis } from 'react-moralis';
 
 import { Web3Modal } from '@web3modal/react'
 import { useAccount, Web3Button } from '@web3modal/react'
