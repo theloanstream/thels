@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import ConnectWallet from './ConnectWallet';
 import { useAccount, Web3Button } from '@web3modal/react'
 
+
 const NAV_LINKS = [
   { name: "Trade", href: '/trade' },
 ]
@@ -22,7 +23,7 @@ export const Navbar = () => {
   return (
     <header className={styles.header}>
       <nav className={styles.navbar} >
-        <Link href='/'><h1 className={styles.brand}>Thels</h1></Link>
+        <Link href='/'><h1 className={styles.brand}>Lekker</h1></Link>
         <ul className={styles.navlinkContainer}>
           {NAV_LINKS.map((link) => (
             <Link key={link.name} href={link.href}>

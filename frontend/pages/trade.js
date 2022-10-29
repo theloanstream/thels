@@ -69,13 +69,6 @@ function trade() {
     getDatafromContract();
   }, [])
 
-  const handlePosition = (e) => {
-    console.log("Handle position: ", e)
-  }
-
-  // Dummy data
-  const amount = 0;
-
   return <>
     <Navbar />
     <Container>
@@ -85,14 +78,6 @@ function trade() {
         </div>
 
         <div className="col-span-2 grid gap-4">
-          <Card>
-            <h1 className='text-2xl font-bold mb-4'>Trade</h1>
-            <form onSubmit={handlePosition} className='flex gap-4 flex-col'>
-              <input min={0} value={amount} onChange={(e) => setAmount(e.target.value)} type="number" />
-              <button className='bg-violet-500 hover:bg-violet-400  active:bg-violet-600 shadow-xl'>
-              </button>
-            </form>
-          </Card>
         </div>
         <div className='col-span-2'>
         </div>
