@@ -24,8 +24,8 @@ export const Navbar = () => {
   return (
     <header className={styles.header}>
       <nav className={styles.navbar} >
-      {/* <Image src="/lekker_word.png" alt="Lekker" width="100" height="25" /> */}
-        <Link href='/'><h1 className={styles.brand}>Lekker</h1></Link>
+      <Image src="/lekker_word.png" alt="Lekker" width="100" height="25" />
+        {/* <Link href='/'><h1 className={styles.brand}>Lekker</h1></Link> */}
         <ul className={styles.navlinkContainer}>
           {NAV_LINKS.map((link) => (
             <Link key={link.name} href={link.href}>
