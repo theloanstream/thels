@@ -17,9 +17,9 @@ function Wrap() {
 
   const Form = () => (
     <Card>
-      <h1 className='text-2xl font-bold mb-4'>Trade X token for {data[key].coin}</h1>
+      <h1 className='text-2xl font-bold mb-4'>{data[key].action} {data[key].coin}</h1>
       <form onSubmit={handleWrap} className='flex gap-4 flex-col'>
-        <p className='description'></p>
+        {(data[key].action == "Long") ? <p>Enter amount of coins you want to long</p> : <p>Enter amount in USDC to be used as collateral for short</p>}
         {/* Enter amount */}
         <input min={0} value={amount} onChange={(e) => setAmount(e.target.value)} type="number" placeholder="Amount" />
         {/* Open position */} 
@@ -41,8 +41,8 @@ function Wrap() {
     setKey(key);
   }
 
-  var descElement = this.getElementsByClassName("description");
-  descElement.innerHTML="Enter amount of coins you want to long";
+  // var descElement = this.getElementsByClassName("description");
+  // descElement.innerHTML="Enter amount of coins you want to long";
   // if(data[key].action == "Long"){  // <= you can put your condition here
   //   descElement.innerHTML="Enter amount of coins you want to long";
   // }else if (data[key].action == "Short"){
