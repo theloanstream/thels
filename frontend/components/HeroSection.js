@@ -19,9 +19,6 @@ function HeroSection() {
         </div>
 
       </div>
-      <div>
-        <img className='p-4' src='/hero-image-2.png' layout='fill' alt='hero-image' />
-      </div>
 
     </div>
   );
