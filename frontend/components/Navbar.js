@@ -6,7 +6,6 @@ import { useAccount, Web3Button } from '@web3modal/react'
 
 const NAV_LINKS = [
   { name: "Dashboard", href: '/dashboard' },
-  { name: "Deposit/Withdraw", href: '/deposit' },
 ]
 
 const styles = {

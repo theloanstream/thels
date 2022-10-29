@@ -1,6 +1,5 @@
 import React from 'react';
 import Container from '../components/Container';
-import Deposit from '../components/Deposit';
 import Navbar from '../components/Navbar';
 import Withdraw from '../components/Withdraw';
 
